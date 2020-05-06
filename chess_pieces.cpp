@@ -69,6 +69,14 @@ void bishop::piece_move() { number_of_moves++; }
 void knight::piece_move() { number_of_moves++; }
 void rook::piece_move() { number_of_moves++; }
 void pawn::piece_move() { number_of_moves++; }
+//decreaseing the number of moves made
+void piece::undo_piece_move() {};
+void queen::undo_piece_move() { number_of_moves--; }
+void king::undo_piece_move() { number_of_moves--; }
+void bishop::undo_piece_move() { number_of_moves--; }
+void knight::undo_piece_move() { number_of_moves--; }
+void rook::undo_piece_move() { number_of_moves--; }
+void pawn::undo_piece_move() { number_of_moves--; }
 //is the pawn taking a piece
 //piece
 bool piece::valid_move(std::string location, std::string destination, bool take_piece) { return 0; }
@@ -76,7 +84,8 @@ bool piece::valid_move(std::string location, std::string destination, bool take_
 bool queen::valid_move(std::string location, std::string destination, bool take_piece) {
 	int rank_move_distance = abs(string_to_rank_int(destination) - string_to_rank_int(location));
 	int file_move_distance = abs(string_to_file_int(destination) - string_to_file_int(location));
-	if ((rank_move_distance == 0 && file_move_distance > 0 && file_move_distance <= 8) || (file_move_distance == 0 && rank_move_distance > 0 && rank_move_distance <= 8) || (rank_move_distance == file_move_distance && rank_move_distance > 0 && file_move_distance > 0 && rank_move_distance <= 8 && file_move_distance <= 8)) {
+	if ((rank_move_distance == 0 && file_move_distance > 0 && file_move_distance <= 8) || (file_move_distance == 0 && rank_move_distance > 0 && rank_move_distance <= 8) 
+		|| (rank_move_distance == file_move_distance && rank_move_distance > 0 && file_move_distance > 0 && rank_move_distance <= 8 && file_move_distance <= 8)) {
 		//queen can move in straight lines and diagonals 
 		//but not through pieces, need to have a check for that
 		return 1;
@@ -88,7 +97,8 @@ bool king::valid_move(std::string location, std::string destination, bool take_p
 	int rank_move_distance = abs(string_to_rank_int(destination) - string_to_rank_int(location));
 	int file_move_distance = abs(string_to_file_int(destination) - string_to_file_int(location));
 	//can move only one square but in any direction
-	if (rank_move_distance == 1 || file_move_distance == 1) {
+	if ((rank_move_distance == 1 && file_move_distance == 1)|| (rank_move_distance == 1 && file_move_distance == 0)
+		||(rank_move_distance == 0 && file_move_distance == 1)) {
 		return 1;
 	}
 	else { return 0; }

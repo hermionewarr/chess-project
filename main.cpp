@@ -23,7 +23,7 @@ void Rules()
 	std::cout << "The Pieces : P: Pawn, R : Rook or Castle, N : Knight, B : Bishop, Q : Queen, K : King." << std::endl;
 	std::cout << "The rules of chess can be found here : https://en.wikipedia.org/wiki/Rules_of_chess\n" << std::endl;
 	std::cout << "This game uses a version of algebraic notation: for example a move of a black pawn from E7 to empty square E5, would " << std::endl;
-	std::cout << "be displayed as p:e7->-e5. A move to an empty is denoted as ->-, taking a piece ->T, castling ->C, pawn promotion ->Q." << std::endl;
+	std::cout << "be displayed as p:e7->-e5. A move to an empty is denoted as ->-, taking a piece ->X, castling ->C, pawn promotion ->Q." << std::endl;
 	std::cout << "This is how the game will be displayed at the end, other than that you dont need to worry about it!" << std::endl;
 	std::cout << "\nReady to play? (y/n)" << std::endl;
 	std::string start_play;
@@ -45,25 +45,25 @@ int main()
 	std::cout << "\t- by Hermione Warr \n" << std::endl;
 	//option to see the rules
 	std::string yn;
-	std::cout << " Would you like to see the rules of chess? (y/n)" << std::endl;
+	std::cout << "Would you like to see the rules of chess? (y/n)" << std::endl;
 	std::cin >> yn;
 	if (yn == "y" || yn == "Y" || yn == "yes") {
 		Rules();
 	}
 	else if (yn == "n" || yn == "N" || yn == "no") {
-		std::cout << " Ok lets play!" << std::endl;
+		std::cout << "Ok lets play!" << std::endl;
 	}
 	else {
-		std::cout << " Please enter y or n: " << std::endl;
+		std::cout << "Please enter y or n: " << std::endl;
 		std::cin.ignore();
 		std::cin.clear();
 		std::cin >> yn;
 	}
 	//start the game
 	board chess_game;
-	//while (!chess_game.checkmate()) 
-	//have a do while(!checkmate) loop
-	chess_game.display_board();
-	
+	do {
+		chess_game.display_board();
+	} while (!chess_game.checkmate());
+	std::cout << "Have we escaped?" << std::endl;
 	return 0;
 }

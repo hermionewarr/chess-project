@@ -5,17 +5,16 @@
 #define CHESS_PIECES_H
 #include "includes.h"
 
-
 //piece classes
 class piece {//abstract base class
 protected:
 public:
-	virtual ~piece() { std::cout << "destroying piece" << std::endl; }
+	virtual ~piece() { std::cout << "Destroying piece" << std::endl; }
 	virtual char icon();
 	virtual std::string name();
 	virtual int number_of_moves_made();
 	virtual void piece_move();
-	//bool captured{false};
+	virtual void undo_piece_move();
 	virtual std::string rank_file_location(int row, int col);
 	virtual int string_to_rank_int(std::string location);
 	virtual int string_to_file_int(std::string location);
@@ -54,10 +53,8 @@ public:
 	int piece_colour();
 	int number_of_moves_made();
 	void piece_move();
+	void undo_piece_move();
 	bool valid_move(std::string location, std::string destination, bool take_piece);
-	//location queens_location;
-	//queens_location.insert(std::pair<std::string, int>("a", 1));
-	//std::string location();
 };
 class king : public piece {
 private:
@@ -84,6 +81,7 @@ public:
 	int piece_colour();
 	int number_of_moves_made();
 	void piece_move();
+	void undo_piece_move();
 	bool valid_move(std::string location, std::string destination, bool take_piece);
 };
 class bishop : public piece {
@@ -111,6 +109,7 @@ public:
 	int piece_colour();
 	int number_of_moves_made();
 	void piece_move();
+	void undo_piece_move();
 	bool valid_move(std::string location, std::string destination, bool take_piece);
 };
 class knight : public piece {
@@ -138,6 +137,7 @@ public:
 	int piece_colour();
 	int number_of_moves_made();
 	void piece_move();
+	void undo_piece_move();
 	bool valid_move(std::string location, std::string destination, bool take_piece);
 };
 class rook : public piece {
@@ -165,6 +165,7 @@ public:
 	int piece_colour();
 	int number_of_moves_made();
 	void piece_move();
+	void undo_piece_move();
 	bool valid_move(std::string location, std::string destination, bool take_piece);
 };
 class pawn : public piece {
@@ -173,7 +174,6 @@ private:
 	int number_of_moves{};
 	char piece_icon;
 	std::string piece_name;
-
 public:
 	pawn(int p_colour) : piece{} { 
 		colour = p_colour; 
@@ -193,6 +193,7 @@ public:
 	int piece_colour();
 	int number_of_moves_made();
 	void piece_move();
+	void undo_piece_move();
 	bool valid_move(std::string location, std::string destination, bool take_piece);
 };
 class empty : public piece {

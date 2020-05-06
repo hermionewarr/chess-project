@@ -5,7 +5,6 @@
 #include "chess_game.h"
 
 void chess_game::Rules() {
-
 	{
 		std::cout << "This is a representation of the board.\n" << std::endl;
 		std::cout << "     A B C D E F G H" << std::endl;
@@ -40,6 +39,5 @@ void chess_game::Rules() {
 			std::cin.clear();
 			std::cin >> start_play;
 		}
-
 	}
 }
