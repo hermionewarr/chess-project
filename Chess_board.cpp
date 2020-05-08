@@ -9,7 +9,63 @@ void print_vector(std::vector<T> const& vec) {
 		std::cout << element << std::endl;
 	}
 }
+void pause(){
+	std::cout << "Press enter to go to next move.";
+	std::cin.get();
+}
 //board functions
+//save/load game function
+void board::save_game() {
+	std::string game_file_name;
+	std::cout << "Please enter the name of the game you want to save (no extension): ";
+	std::cin >> game_file_name;
+	game_file_name += ".txt";
+	std::ofstream game_file(game_file_name);
+	if (game_file.is_open()) {
+		std::cout << "Saving game..." << std::endl;
+		for (std::vector<std::string>::iterator it = list_of_moves_made.begin(); it != list_of_moves_made.end(); it++) {
+			game_file << *it << "\n";
+		}
+		game_file.close();
+		std::cout << "Your game has been saved as: " << game_file_name << std::endl;
+	}
+	else {
+		std::cout << "Unable to save game, sorry!" << std::endl;
+	}
+	return;
+}
+void board::load_game() {
+	std::string load_file_name;
+	std::cout << "Please enter the name of the game you want to load (no extension needed)" << std::endl;
+	std::cin >> load_file_name; 
+	load_file_name += ".txt";
+	std::ifstream load_file(load_file_name);
+	std::string each_move;
+	current_turn = 0;
+	if (load_file.is_open()) {
+		std::cout << "Loading game..." << std::endl;
+		pause();//this takes the previous enter
+		display_board();
+		pause(); 
+		while (std::getline(load_file, each_move)) {
+			std::string piece_location;
+			piece_location += each_move.at(2);
+			piece_location += each_move.at(3);
+			std::string piece_destination;
+			piece_destination += each_move.at(7);
+			piece_destination += each_move.at(8);
+			move(piece_location, piece_destination);
+			pause();
+		}
+	}
+	else {
+		std::cerr << "Error loading file." << std::endl;
+		return;
+	}
+}
+void board::show_game() {
+	print_vector(list_of_moves_made);
+}
 bool board::checkmate() {
 	//interate though and see if one move could get king out of check
 	//perform every possible move by every friendly piece and then check if king is still in check. 
@@ -31,21 +87,19 @@ bool board::checkmate() {
 			if (help_output.size() != 0) { return false; }
 		}
 	}
-	std::cout << "Checkmate!" << std::endl;
-	std::cout << return_current_turn() << " player has won" << std::endl;
 	return true;
 }
 bool board::king_in_check() {
 	std::string king_location;
 	int vector_index{};
 	for (std::vector<std::shared_ptr<piece>>::iterator it = current_board.begin(); it != current_board.end(); it++, vector_index++) {
-		//check whose go. use that players king as piece destination then look at the valid moves for 
-		//each piece on the board and see if any of them can take the king
+		//check whose turn and find their king
 		if ((*it)->name() == "King" && (*it)->piece_colour() == current_turn) {
 			king_location = rank_file_string_coordinate(vector_index);
 		}
 	}
 	int index{};
+	//look at the valid moves for each piece on the board and see if any of them can take the king
 	for (std::vector<std::shared_ptr<piece>>::iterator it = current_board.begin(); it != current_board.end(); it++,index++) {
 		if ((*it)->piece_colour() != current_turn && (*it)->valid_move(rank_file_string_coordinate(index), king_location, 1) 
 			&& is_path_clear(rank_file_string_coordinate(index), king_location)) {
@@ -64,6 +118,11 @@ std::vector<std::string> board::help(std::string location) {
 		if (location != destination) {
 			//find all moves player can make from that location. cant move into check
 			if ((*it_des)->piece_colour() != current_turn && is_path_clear(location, destination) == true) {
+				if (current_board[location_index]->name() == "King" && (*it_des)->icon() == '-' && abs(string_to_file(destination) - string_to_file(location)) == 2 && castling_possible(location, destination) == true) {
+					castling(location, destination);
+					if(king_in_check() == false){ destinations.push_back(destination); }
+					undo_move();
+				}
 				if ((*it_des)->icon() == '-' && current_board[location_index]->valid_move(location, destination, 0)) {
 					if (current_board[location_index]->name() == "Pawn" && (string_to_rank(destination) == 8 || string_to_rank(destination) == 1)) {
 						//pawn promotion
@@ -126,13 +185,22 @@ void board::castling(std::string location, std::string destination) {
 	std::cout << "Castling!" << std::endl;
 	list_of_moves_made.push_back(std::string(1, current_board[index(string_to_rank(location), string_to_file(location))]->icon()) + ":" + location + "->C" + destination);
 	current_board[index(string_to_rank(location), string_to_file(location))]->piece_move();
-	std::shared_ptr<piece> temp = current_board[index(string_to_rank(destination), string_to_file(destination))];
+	//move the king
 	current_board[index(string_to_rank(destination), string_to_file(destination))] = current_board[index(string_to_rank(location), string_to_file(location))];
-	current_board[index(string_to_rank(location), string_to_file(location))] = temp;
+	current_board[index(string_to_rank(location), string_to_file(location))] = std::make_shared<empty>();
+	//move the rook
+	if (string_to_file(destination) > 5) {//king side
+		current_board[index(string_to_rank(location), (string_to_file(location) + 1))] = current_board[index(string_to_rank(location), (string_to_file(location) + 3))];
+		current_board[index(string_to_rank(location), (string_to_file(location) + 3))] = std::make_shared<empty>();
+	}
+	else {//queen side
+		current_board[index(string_to_rank(location), (string_to_file(location) - 1))] = current_board[index(string_to_rank(location), (string_to_file(location) - 4))];
+		current_board[index(string_to_rank(location), (string_to_file(location) - 4))] = std::make_shared<empty>();
+	}
 }
 void board::promotion(std::string location, std::string destination) {
 	//once pawn reached end of board gets upgraded to queen
-	std::cout << " Pawn gets promoted to a Queen!" << std::endl;
+	std::cout << "Pawn gets promoted to a Queen!" << std::endl;
 	list_of_moves_made.push_back(std::string(1, current_board[index(string_to_rank(location), string_to_file(location))]->icon()) + ":" + location + "->Q" + destination);
 	current_board[index(string_to_rank(destination), string_to_file(destination))] = std::make_shared<queen>(current_board[index(string_to_rank(location), string_to_file(location))]->piece_colour());
 	current_board[index(string_to_rank(location), string_to_file(location))] = std::make_shared<empty>();
@@ -159,9 +227,18 @@ void board::undo_move() {
 	}
 	else if(move_type == 'C' ){
 		current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->undo_piece_move();
-		std::shared_ptr<piece> temp = current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))];
-		current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))] = current_board[index(string_to_rank(piece_location), string_to_file(piece_location))];
-		current_board[index(string_to_rank(piece_location), string_to_file(piece_location))] = temp;
+		//move the king
+		current_board[index(string_to_rank(piece_location), string_to_file(piece_location))] = current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))];
+		current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))] = std::make_shared<empty>();
+		//move the rook
+		if (string_to_file(piece_destination) > 5) {//king side
+			current_board[index(string_to_rank(piece_location), string_to_file(piece_location) + 3)] = current_board[index(string_to_rank(piece_location), string_to_file(piece_location) + 1)];
+			current_board[index(string_to_rank(piece_location), string_to_file(piece_location) + 1)] = std::make_shared<empty>();
+		}
+		else {//queen side
+			current_board[index(string_to_rank(piece_location), string_to_file(piece_location) - 4)] = current_board[index(string_to_rank(piece_location), string_to_file(piece_location) - 1)];
+			current_board[index(string_to_rank(piece_location), string_to_file(piece_location) - 1)] = std::make_shared<empty>();
+		}
 		list_of_moves_made.pop_back();
 	}
 	else if (move_type == 'Q') {
@@ -218,7 +295,7 @@ std::string board::return_current_turn() {
 }
 int board::move_number() { return list_of_moves_made.size(); }
 //The move function checks the inputted moves and if it's valid it calls the appropriate move functions.
-void board::move() {
+void board::move_input() {
 	//move entered
 	std::string piece_location;
 	std::string piece_destination;
@@ -231,196 +308,214 @@ void board::move() {
 			std::cout << current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->name() << std::endl;
 		}
 		else if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->piece_colour() == 2) {
-			std::cout << "You have not selected a piece. Try again." << std::endl; 
-			user_input(); 
+			std::cout << "You have not selected a piece. Try again." << std::endl;
+			user_input();
+			return;
 		}
 		else if (current_turn != current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->piece_colour()) {
 			std::cout << "Its not your turn." << std::endl;
 			//tell them whose go it is
 			whose_turn();
-			move();
+			move_input();
+			return;
 		}
 	}
-	else { 
-		//make sure this works
+	else {
 		std::cout << "Please enter a valid piece position: ";
-		std::cin.clear();
-		std::cin >> piece_location;
+		move_input();
+		return;
 	}
-	std::cout << "Help<H> or enter piece destination: ";
+	std::cout << "Enter <H> for help or enter piece destination: ";
 	std::cin >> piece_destination;
-	if (piece_destination == "h" || piece_destination == "H") {
+	if ((piece_destination == "h" || piece_destination == "H") && piece_destination.length() == 1) {
 		std::vector<std::string> help_output = help(piece_location);
-		if (help_output.size() == 0) { std::cout << "No possible moves. Choose another piece to move." << std::endl; move(); }
+		if (help_output.size() == 0) { std::cout << "No possible moves. Choose another piece to move." << std::endl; move_input(); }
 		else {
 			std::cout << "List of possible moves for selected piece: " << std::endl;
 			print_vector(help_output);//template calls
 			piece_destination.clear();
-			std::cout << "Choose another piece to move <C> or enter piece destination: ";
+			std::cout << "Enter piece destination: ";
 			std::cin >> piece_destination;
-			if (piece_destination == "C" || piece_destination == "c") { move(); }
 		}
 	}
-	//move checks performed
-	//check if inout is valid
 	if (piece_destination.length() == 2 && index(string_to_rank(piece_location), string_to_file(piece_location)) != 100) {
 		//checking the path is clear
 		//see if there are any pieces in between piece location and destination. only have to consider straight lines or diagonals
-		if(is_path_clear(piece_location,piece_destination) == false){ 
+		if (is_path_clear(piece_location, piece_destination) == false) {
 			std::cout << " Path is not clear. Please try another move." << std::endl;
-			move();
+			move_input();
+			return;
 		}
-		else {
-			//check if destination square is empty
-			if (current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->icon() == '-') {
-				if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->valid_move(piece_location, piece_destination, 0)) {
-					if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->name() == "pawn" && (string_to_rank(piece_destination) == 8 || string_to_rank(piece_destination) == 1)) {
-						//pawn promotion
-						promotion(piece_location, piece_destination);
-					}
-					else {
-						//swap
-						bool undo = false;
-						swap_piece(piece_location, piece_destination, undo);
-					}
-				}
-				else {
-					std::cerr << "Invalid move, please try again." << std::endl;
-					move();
-				}
-			}
-			//if not check destination piece is on the enemy side
-			else if (current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->piece_colour() != current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->piece_colour()) {
-				if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->valid_move(piece_location, piece_destination, 1)) {
-					if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->name() == "pawn" && (string_to_rank(piece_destination) == 8 || string_to_rank(piece_destination) == 1)) {
-						//pawn promotion
-						promotion(piece_location, piece_destination);
-					}
-					else {
-						//take
-						take_piece(piece_location, piece_destination);
-					}
-				}
-				else {
-					std::cerr << " Invalid move, please try again." << std::endl;
-					move();
-				}
-			}
-			//else check if its a king and rook for castling op
-			else if (tolower(current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->icon()) == 'k' && tolower(current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->icon()) == 'r') {
-				if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->number_of_moves_made() == 0 && current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->number_of_moves_made() == 0) {
-					//cant be any pieces inbetween, can't castle out of check
-					castling(piece_location, piece_destination);
-				}
-				else {
-					std::cout << "You can't castle if you have already moved one of the concerned pieces" << std::endl;
-					move();
-				}
-			}
-			else {
-				std::cerr << "You can't take your own piece..." << std::endl;
-				move();
-			}
-			//see if person is in check
-			if (king_in_check() == true) {
-				std::cout << "You cannot move into check." << std::endl;
-				std::cout << "Please try another move." << std::endl;
-				undo_move();
-				move();
-			}
-		}
+		move(piece_location, piece_destination);
 	}
 	else {
 		std::cerr << " Invalid destination input, please try again." << std::endl;
-		move();
+		move_input();
+		return;
 	}
-	//current turn update
-	current_turn == 0? (current_turn = 1):(current_turn = 0);
-	//look at the player who is about to go and see if they are checkmated
-	if (king_in_check() == true && checkmate() == true ) {
-		std::cout << "See you next time!" << std::endl;
-		game_over = true;
-	}
-	display_board();
 }
-void board::display_board() {
-	switch (game_over)
-	{
-	case false:
-		std::system("cls");
-		std::cout << "\n  Hermione Warr's Chess Game\n" << std::endl;
-		whose_turn();
-		if (king_in_check() == true) { std::cout << return_current_turn() << " player is in check" << std::endl; }
-		if (move_number() > 0) {
-			std::cout << "Last move: " << list_of_moves_made.back() << std::endl;
+bool board::move(std::string location, std::string destination) {
+	//move entered
+	std::string piece_location = location;
+	std::string piece_destination = destination;
+	//else check if its a king and rook for castling op
+	if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->name() == "King" && current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->icon() == '-' && king_in_check() == false && abs(string_to_file(piece_destination)-string_to_file(piece_location))==2) {
+		if (castling_possible(piece_location, piece_destination) == true) {
+			//cant be any pieces inbetween, can't castle out of check
+			castling(piece_location, piece_destination);
 		}
-		std::cout << "\n      A  B  C  D  E  F  G  H " << std::endl;
-		std::cout << "     ------------------------" << std::endl;
-		for (size_t irow{ 1 }; irow < 9; irow++) {
-			std::cout << "  " << 9 - irow << " |";
-			for (size_t jcol{ 1 }; jcol < 9; jcol++) {
-				std::cout << " " << current_board[index(irow, jcol)]->icon() << " ";
-			}
-			std::cout << "| " << 9 - irow << std::endl;
+		else {
+			move_input();
 		}
-		std::cout << "     ------------------------" << std::endl;
-		std::cout << "      A  B  C  D  E  F  G  H " << std::endl;
-		std::cout << std::endl;
-		//display pieces taken by each player
-		if (move_number() > 0) {
-			std::cout << " Taken pieces: ";
-			if (taken_pieces.size() == 0) {
-				std::cout << "no pieces captured yet" << std::endl;
+	}
+	//check if destination square is empty
+	else if (current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->icon() == '-') {
+		if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->valid_move(piece_location, piece_destination, 0)) {
+			if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->name() == "Pawn" && (string_to_rank(piece_destination) == 8 || string_to_rank(piece_destination) == 1)) {
+				//pawn promotion
+				promotion(piece_location, piece_destination);
 			}
 			else {
-				bool any_taken_whites = false;
-				bool any_taken_blacks = false;
-				for (std::vector<std::shared_ptr<piece>>::iterator it = taken_pieces.begin(); it != taken_pieces.end(); it++) {
-					if ((*it)->piece_colour() == 0) { any_taken_whites = true; }
-					else if ((*it)->piece_colour() == 1) { any_taken_blacks = true; }
-				}
-				if (any_taken_whites = true) {
-					std::cout << "\n\tWHITE captured pieces: ";
-					for (std::vector<std::shared_ptr<piece>>::iterator it = taken_pieces.begin(); it != taken_pieces.end(); it++) {
-						if ((*it)->piece_colour() == 0) {
-							std::cout << (*it)->icon() << " ";
-						}
-					}
-					std::cout << std::endl;
-				}
-				if (any_taken_blacks == true) {
-					std::cout << "\tBLACK captured piece: ";
-					for (std::vector<std::shared_ptr<piece>>::iterator it = taken_pieces.begin(); it != taken_pieces.end(); it++) {
-						if ((*it)->piece_colour() == 1) {
-							std::cout << (*it)->icon() << " ";
-						}
-					}
-				}
+				//swap
+				bool undo = false;
+				swap_piece(piece_location, piece_destination, undo);
 			}
-			std::cout << std::endl;
 		}
-		user_input();
-	case true: break;
+		else {
+			std::cerr << "Invalid move, please try again." << std::endl;
+			move_input();
+			return false;
+		}
 	}
+	//if not check destination piece is on the enemy side
+	else if (current_board[index(string_to_rank(piece_destination), string_to_file(piece_destination))]->piece_colour() != current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->piece_colour()) {
+		if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->valid_move(piece_location, piece_destination, 1)) {
+			if (current_board[index(string_to_rank(piece_location), string_to_file(piece_location))]->name() == "Pawn" && (string_to_rank(piece_destination) == 8 || string_to_rank(piece_destination) == 1)) {
+				//pawn promotion
+				std::cout << "promoting" << std::endl;
+				promotion(piece_location, piece_destination);
+			}
+			else {
+				//take
+				take_piece(piece_location, piece_destination);
+			}
+		}
+		else {
+			std::cerr << " Invalid move, please try again." << std::endl;
+			move_input();
+			return false;
+		}
+		}
+	else {
+		std::cerr << "You can't take your own piece..." << std::endl;
+		move_input();
+		return false;
+	}
+	//see if person is in check
+	if (king_in_check() == true) {
+		std::cout << "You cannot move into check." << std::endl;
+		std::cout << "Please try another move." << std::endl;
+		undo_move();
+		move_input();
+		return false;
+	}
+	//current turn update
+	current_turn = (move_number() % 2);
+	//update the board
+	display_board();
+	//offer option of saving your game.
+	if (king_in_check() == true && checkmate() == true ) {
+		game_over = true;
+		std::cout << "Do you want to save this game? (y/n)" << std::endl;
+		std::string save;
+		std::cin >> save;
+		if (save == "y" || save == "Y") {
+			save_game();
+		}
+	}
+	return game_over;
+}
+void board::display_board() {
+	std::system("cls");
+	std::cout << "\n  Hermione Warr's Chess Game\n" << std::endl;
+	if (checkmate() == true) { 
+		std::cout << "Checkmate!" << std::endl; 
+	}
+	else {
+		whose_turn();
+		if (king_in_check() == true) { std::cout << return_current_turn() << "Player is in check" << std::endl; }
+	}
+	if (move_number() > 0) {
+		std::cout << "Last move: " << list_of_moves_made.back() << std::endl;
+		cool_move();
+	}
+	std::cout << "\n      A  B  C  D  E  F  G  H " << std::endl;
+	std::cout << "     ------------------------" << std::endl;
+	for (size_t irow{ 1 }; irow < 9; irow++) {
+		std::cout << "  " << 9 - irow << " |";
+		for (size_t jcol{ 1 }; jcol < 9; jcol++) {
+			std::cout << " " << current_board[index(irow, jcol)]->icon() << " ";
+		}
+		std::cout << "| " << 9 - irow << std::endl;
+	}
+	std::cout << "     ------------------------" << std::endl;
+	std::cout << "      A  B  C  D  E  F  G  H " << std::endl;
+	std::cout << std::endl;
+	//display pieces taken by each player
+	if (move_number() > 0) {
+		std::cout << " Taken pieces: ";
+		if (taken_pieces.size() == 0) {
+			std::cout << "no pieces captured yet" << std::endl;
+		}
+		else {
+			bool any_taken_whites = false;
+			bool any_taken_blacks = false;
+			for (std::vector<std::shared_ptr<piece>>::iterator it = taken_pieces.begin(); it != taken_pieces.end(); it++) {
+				if ((*it)->piece_colour() == 0) { any_taken_whites = true; }
+				else if ((*it)->piece_colour() == 1) { any_taken_blacks = true; }
+			}
+			if (any_taken_whites = true) {
+				std::cout << "\n\tWHITE captured pieces: ";
+				//using lambdas to print out taken pieces
+				std::for_each(taken_pieces.begin(), taken_pieces.end(),
+					[](std::shared_ptr<piece> element) {
+						if (element->piece_colour() == 0) { std::cout << element->icon() << " "; }
+					});
+				std::cout << std::endl;
+			}
+			if (any_taken_blacks == true) {
+				std::cout << "\tBLACK captured piece: ";
+				std::for_each(taken_pieces.begin(), taken_pieces.end(),
+					[](std::shared_ptr<piece> element) {
+						if (element->piece_colour() == 1) { std::cout << element->icon() << " "; }
+					});
+			}
+		}
+		std::cout << std::endl;
+	} 
 }
 void board::user_input() {
 	std::string option;
-	std::cout << "Options:  Move<M>  New game<N>  Quit<Q>  Undo move<U>" << std::endl;
+	std::cout << "Options:  New game<N>  Move<M>  Quit<Q>  Undo move<U>  Load game<L>  Save game<S>" << std::endl;
 	std::cin >> option;
-	if (option == "m" || option == "M") {
-		move();
+	if (option == "m" || option == "M" ) {
+		if(game_in_play == true ||move_number() > 0){ move_input(); }
+		else { std::cout << "Must be a game in play to move." << std::endl; user_input(); }
 	}
-	else if (option == "n" || option == "N") {
+	else if (option == "n" || option == "N" && move_number() == 0) {
 		//reset
-		list_of_moves_made.clear();
+		/*list_of_moves_made.clear();
+		taken_pieces.clear();
 		current_turn = 0;
+		current_board = nullptr;
 		std::cout << "Starting new game!\n" << std::endl;
-		board new_chess_game;
-		new_chess_game.display_board();
+		board();*/
+		game_in_play = true;
+		display_board();
 	}
 	else if (option == "q" || option == "Q") {
 		std::string quit;
-		std::cout << " Are you sure? (y/n)" << std::endl;
+		std::cout << "Are you sure? (y/n)" << std::endl;
 		std::cin >> quit;
 		if (quit == "y" || quit == "yes") {
 			//quit game
@@ -441,9 +536,15 @@ void board::user_input() {
 		current_turn == 0 ? (current_turn = 1) : (current_turn = 0);
 		display_board();
 	}
+	else if ((option == "s" || option == "S") && move_number() > 0) {
+		save_game();
+	}
+	else if ((option == "l" || option == "L") && move_number() == 0) {
+		load_game();
+	}
 	else {
 		std::cerr << "Invalid input. Please try again." << std::endl;
-		user_input();
+		return;
 	}
 }
 //constructor
@@ -478,9 +579,30 @@ board::board() {
 		current_board.push_back(std::make_shared <knight>(0));
 		current_board.push_back(std::make_shared <rook>(0));
 	}
-	catch (std::out_of_range e) {
-		std::cerr << "Current board out of range" << std::endl;
+	catch (std::bad_alloc memory_fail) {
+		std::cerr << "Current board memory allocation failure." << std::endl;
+		exit(0);
 	}
+}
+void board::cool_move() {
+	std::string last_move = list_of_moves_made.back();
+	char move_type = last_move.at(6);
+	if(move_type == 'Q'){ std::cout << "Advaced move detected: Pawn Promotion!" << std::endl;}
+	else if (move_type == 'C') { std::cout << "Advanced move detected: Castling!" << std::endl; }
+}
+//castling conditions
+bool board::castling_possible(std::string king_location, std::string king_destination) {
+	int file_move = string_to_file(king_destination) - string_to_file(king_location);
+	int rook_file_position = +3;
+	bool king_side = true;
+	if (file_move < 0) { king_side = false; rook_file_position = -4; }
+	std::string rook_position = rank_file_string_coordinate(index(string_to_rank(king_location), string_to_file(king_location) + rook_file_position));
+	//neither piece can have moved before. Can't be any pieces inbetween. Can't castle out of check
+	if (current_board[index(string_to_rank(king_location), string_to_file(king_location))]->number_of_moves_made() == 0 && 
+		current_board[index(string_to_rank(king_location), string_to_file(king_location)+rook_file_position)]->number_of_moves_made() == 0 && is_path_clear(king_location, rook_position)) {
+		return true;
+	}
+	return false;
 }
 //checking a piece can move to the chosen destination
 bool board::is_path_clear(std::string piece_location, std::string piece_destination) {
