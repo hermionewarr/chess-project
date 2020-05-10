@@ -16,7 +16,7 @@ public:
 	virtual void piece_move();
 	virtual void undo_piece_move();
 	virtual int piece_colour() = 0;
-	virtual bool valid_move(std::string location, std::string destination, bool take_piece);	
+	virtual bool valid_move(std::string location, std::string destination, bool take_piece);
 };
 //derived classes
 class queen : public piece {

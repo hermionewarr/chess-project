@@ -1,35 +1,29 @@
-//Hermione Warr - final project: Chess boardgame
+//Final project: Chess boardgame
+//Student ID: 10134857
 //Made: 05/2020
 
 #include "includes.h"
 #include "chess_pieces.h"
 #include "Chess_board.h"
-#include "chess_game.h"
+#include "chess_game_info.h"
 
 int main()
 {
-	/*#include <Windows.h>
-	int k{};
-	for (k = 1; k < 255; k++) {
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), k);
-		std::cout << k << "Colours!" << std::endl;
-	}*/
 	bool play_again = true;
 	while (play_again == true) {
-		std::cout << "\n\t    Chess Game" << std::endl;
-		std::cout << "\t- by Hermione Warr \n" << std::endl;
 		//Chess_game namespace
-		Chess_game::Game game;
-		//option to see the rules
-		game.Rules();
+		chess_game_info_ns::game_info chess_info;
+		chess_info.starting_display();
+		//option to see the rules and infomation
+		chess_info.Rules();
 		//start the game
-		game.starting_display();
+		chess_info.starting_display();
 		board chess_game;
 		while (!chess_game.game_over) {
 			chess_game.user_input();
 		}
-		game.checkmate_display();
-		std::cout << "\t "<< chess_game.return_current_turn() << " has won!" << std::endl;
+		chess_info.checkmate_display();
+		std::cout << "\t "<< chess_game.return_current_turn() << " has won!\n" << std::endl;
 		std::string show_game;
 		std::cout << "Show the moves of the game? (y/n): ";
 		std::cin >> show_game;
@@ -44,13 +38,13 @@ int main()
 		std::string again;
 		while (again != "y" && again != "n") {
 			std::cin.clear();
-			std::cout << "Do you want to play again?(y/n)" << std::endl;
+			std::cout << "Do you want to play again? (y/n): ";
 			std::cin >> again;
 		}
 		if (again == "y") { play_again = true; std::system("cls"); }
 		else { 
 			play_again = false; 
-			std::cout << "See you next time!" << std::endl;
+			std::cout << "\nSee you next time!" << std::endl;
 		}
 	}
 	return 0;

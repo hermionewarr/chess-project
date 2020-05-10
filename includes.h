@@ -13,5 +13,6 @@
 #include <stdlib.h> //for std::system()
 #include<conio.h> //for getch() a pause
 #include<algorithm> //for_each. lambda
+#include <Windows.h> //for colours
 
 #endif
