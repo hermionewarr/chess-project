@@ -57,8 +57,6 @@ board::~board() {
 	taken_pieces.clear(); 
 	list_of_moves_made.clear(); 
 	current_turn = 0;
-	for (auto &it : current_board) 
-		delete &it;
 	current_board.clear();
 }   
 //function to return the index of the array
@@ -309,10 +307,6 @@ bool board::move(std::string location, std::string destination) {
 	}
 	return game_over;
 }
-std::string board::return_current_turn() {
-	if (current_turn == 0) { std::string current_go = "WHITE"; return current_go; }
-	else { std::string current_go = "BLACK"; return current_go; }
-}
 //castling conditions
 bool board::castling_possible(std::string king_location, std::string king_destination) {
 	int file_move = string_to_file(king_destination) - string_to_file(king_location);
@@ -482,7 +476,8 @@ void board::undo_move() {
 	else if (move_type == 'Q') {
 		current_board[string_to_index(piece_destination)]->undo_piece_move();
 		current_board[string_to_index(piece_location)] = std::make_shared<pawn>(current_board[string_to_index(piece_destination)]->piece_colour());
-		current_board[string_to_index(piece_destination)] = std::make_shared <empty>();
+		if (last_move.at(5) == 'X') { current_board[string_to_index(piece_destination)] = taken_pieces.back(); taken_pieces.pop_back(); }
+		else { current_board[string_to_index(piece_destination)] = std::make_shared <empty>(); }
 		list_of_moves_made.pop_back();
 	}
 	else if (move_type == 'E') {
@@ -491,6 +486,7 @@ void board::undo_move() {
 		current_board[(string_to_index(piece_location) + file_move)] = taken_pieces.back();
 		current_board[string_to_index(piece_location)] = current_board[string_to_index(piece_destination)];
 		current_board[string_to_index(piece_destination)] = std::make_shared <empty>();
+		taken_pieces.pop_back();
 		list_of_moves_made.pop_back();
 	}
 }
@@ -616,7 +612,11 @@ void board::castling(std::string location, std::string destination) {
 }
 void board::promotion(std::string location, std::string destination) {
 	//once pawn reached end of board gets upgraded to queen
-	list_of_moves_made.push_back(std::string(1, current_board[string_to_index(location)]->icon()) + ":" + location + "->Q" + destination);
+	if (current_board[string_to_index(destination)]->icon() != '-') { 
+		taken_pieces.push_back(current_board[string_to_index(destination)]); 
+		list_of_moves_made.push_back(std::string(1, current_board[string_to_index(location)]->icon()) + ":" + location + "-XQ" + destination);
+	}
+	else{list_of_moves_made.push_back(std::string(1, current_board[string_to_index(location)]->icon()) + ":" + location + "->Q" + destination);}
 	current_board[string_to_index(destination)] = std::make_shared<queen>(current_board[string_to_index(location)]->piece_colour());
 	current_board[string_to_index(location)] = std::make_shared<empty>();
 }
@@ -641,6 +641,7 @@ void board::display_board() {
 	std::cout << "\n\t Chess Game\n" << std::endl;
 	if (checkmate() == true) {
 		std::cout << "Checkmate!" << std::endl;
+		std::cout << winner() << " has won!\n" << std::endl;
 	}
 	else {
 		whose_turn();
@@ -702,6 +703,18 @@ void board::whose_turn() {
 	else {
 		std::cout << "BLACK players turn (lowercase): " << std::endl;
 	}
+}
+std::string board::return_current_turn() {
+	std::string current_go;
+	current_turn == 0 ? current_go = "WHITE" : current_go = "BLACK";
+	//if (current_turn == 0) { std::string current_go = "WHITE"; }
+	//else { std::string current_go = "BLACK"; }
+	return current_go;
+}
+std::string board::winner() {
+	std::string winner; //as current turn gets updated before checkmate() called
+	current_turn == 0 ? winner = "Black" : winner = "White";
+	return winner;
 }
 void board::cool_move() {
 	std::string last_move = list_of_moves_made.back();

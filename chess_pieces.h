@@ -7,7 +7,6 @@
 
 //abstract base class
 class piece {
-protected:
 public:
 	virtual ~piece() {};
 	virtual char icon();

@@ -32,7 +32,6 @@ public:
 	void move_input();
 	bool move(std::string location, std::string destination);
 	//functions to validify a move
-	std::string return_current_turn();
 	bool is_path_clear(std::string piece_location, std::string piece_destination);
 	bool castling_possible(std::string king_location, std::string king_destination);
 	bool king_in_check();
@@ -43,9 +42,12 @@ public:
 	void take_piece(std::string location, std::string destination);
 	void castling(std::string location, std::string destination);
 	void promotion(std::string location, std::string destination);
+	void en_passant(std::string location, std::string destination);
 	//functions to display the board
 	void display_board();
 	void whose_turn();
+	std::string return_current_turn();
+	std::string winner();
 	void cool_move();
 	//user_input is the entrance point to the game and calls the functions to play
 	void user_input();
@@ -54,10 +56,6 @@ public:
 	void save_game();
 	void load_game();
 	void show_game();
-	void en_passant(std::string location, std::string destination); //fucking cheating is what it is
-	//std::string board_location(int vector_index);
-	//typedef std::map<int, std::string> location_in_board_vector;
-	//void search_board_vector(location_in_board_vector& the_board, int vector_index);
 };
 
 

@@ -86,7 +86,7 @@ namespace chess_game_info_ns {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 64);//red
 		std::cout << "           \n" << std::endl;
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 07);
-		std::cout << "\t\t\t   Studentt ID: 10134857 \n" << std::endl;
+		std::cout << "\t\t\t   Student ID: 10134857 \n" << std::endl;
 	}
 	void game_info::checkmate_display() {
 		std::system("cls");
@@ -112,10 +112,5 @@ namespace chess_game_info_ns {
 		std::cout << "                \n" << std::endl;
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 07);
 		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), COORD{ 33, 12 });
-		/*int k{};
-		for (k = 16; k < 255; k+16) {
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), k);
-			std::cout << k << "Colours!" << std::endl;
-		}*/
 	}
 }

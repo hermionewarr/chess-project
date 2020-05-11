@@ -19,11 +19,12 @@ int main()
 		//start the game
 		chess_info.starting_display();
 		board chess_game;
+		//board* chess_game = new board;
 		while (!chess_game.game_over) {
 			chess_game.user_input();
 		}
 		chess_info.checkmate_display();
-		std::cout << "\t "<< chess_game.return_current_turn() << " has won!\n" << std::endl;
+		std::cout << "\t " << chess_game.winner() << " has won!\n" << std::endl;
 		std::string show_game;
 		std::cout << "Show the moves of the game? (y/n): ";
 		std::cin >> show_game;
@@ -41,7 +42,7 @@ int main()
 			std::cout << "Do you want to play again? (y/n): ";
 			std::cin >> again;
 		}
-		if (again == "y") { play_again = true; std::system("cls"); }
+		if (again == "y") { play_again = true; }
 		else { 
 			play_again = false; 
 			std::cout << "\nSee you next time!" << std::endl;

@@ -1,0 +1,17 @@
+P:a2->-a4
+p:b7->-b5
+P:a4->-a5
+n:b8->-c6
+P:a5->Eb6
+p:a7->-a5
+P:b6->-b7
+p:a5->-a4
+P:b7-XQa8
+p:d7->-d5
+R:a1->Xa4
+n:c6->-e5
+P:d2->-d4
+q:d8->-d6
+P:d4->Xe5
+q:d6->Xe5
+Q:a8->Xc8
